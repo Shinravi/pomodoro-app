@@ -985,9 +985,8 @@ body {
 /* ---- Enhanced Floating Tips ---- */
 .floating-tip {
     position: fixed;
-    top: 270px;
-    left: calc(50% - 330px);
-    transform: translateY(-50%) translateX(-12px);
+    bottom: 72px;
+    left: 16px;
     max-width: 210px;
     background: var(--bs-dark);
     color: #fff;
@@ -996,12 +995,13 @@ body {
     z-index: 300;
     opacity: 0;
     pointer-events: none;
+    transform: translateY(12px);
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
     box-shadow: 0 8px 32px rgba(0,0,0,0.28);
 }
 
 .floating-tip.visible {
-    transform: translateY(-50%) translateX(0);
+    transform: translateY(0);
     opacity: 1;
     pointer-events: auto;
 }
