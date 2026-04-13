@@ -35,9 +35,7 @@
         <header class="bs-header">
             <div class="band-inner header-inner">
                 <div class="header-brand">
-                    <svg class="sparkle-icon" viewBox="0 0 24 24" fill="none">
-                        <path d="M12 2L14.09 8.26L20 9.27L15.55 13.97L16.91 20L12 16.9L7.09 20L8.45 13.97L4 9.27L9.91 8.26L12 2Z" fill="currentColor"/>
-                    </svg>
+                    <img src="brainscape-logo.svg" alt="Brainscape" class="header-logo">
                     <span class="header-title">Study Timer</span>
                 </div>
                 <button class="btn-settings-open" id="btn-settings">
@@ -96,36 +94,39 @@
             </div>
         </section>
 
-        <!-- Soundscapes Band -->
-        <section class="bs-timer-band bs-timer-band--alt">
-            <div class="band-inner">
-                <h2 class="band-heading">Soundscapes</h2>
-                <p class="band-blurb">Pick an ambient backdrop to lock into deep focus.</p>
-                <div class="soundscape-grid" id="soundscape-grid"></div>
-                <div class="volume-control" id="volume-control">
-                    <svg class="volume-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
-                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                    </svg>
-                    <input type="range" class="volume-slider" id="volume-slider" min="0" max="100" value="50">
+        <!-- Soundscapes & Tasks Grid -->
+        <section class="bs-grid-section">
+            <!-- Soundscapes Band -->
+            <div class="bs-timer-band bs-timer-band--alt">
+                <div class="band-inner">
+                    <h2 class="band-heading">Soundscapes</h2>
+                    <p class="band-blurb">Pick an ambient backdrop to lock into deep focus.</p>
+                    <div class="soundscape-grid" id="soundscape-grid"></div>
+                    <div class="volume-control" id="volume-control">
+                        <svg class="volume-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                        </svg>
+                        <input type="range" class="volume-slider" id="volume-slider" min="0" max="100" value="50">
+                    </div>
                 </div>
             </div>
-        </section>
 
-        <!-- Tasks Band -->
-        <section class="bs-timer-band">
-            <div class="band-inner">
-                <h2 class="band-heading">Tasks</h2>
-                <p class="band-blurb">Track what you're working on each session.</p>
-                <div class="task-input-row">
-                    <input type="text" class="task-input" id="task-input" placeholder="Add a task..." maxlength="120">
-                    <button class="btn-add-task" id="btn-add-task">Add</button>
-                </div>
-                <div class="task-list" id="task-list"></div>
-                <div class="task-footer" id="task-footer" style="display:none">
-                    <button class="btn-task-action" id="btn-clear-finished">Clear finished</button>
-                    <button class="btn-task-action btn-task-action--danger" id="btn-clear-all">Clear all</button>
+            <!-- Tasks Band -->
+            <div class="bs-timer-band">
+                <div class="band-inner">
+                    <h2 class="band-heading">Tasks</h2>
+                    <p class="band-blurb">Track what you're working on each session.</p>
+                    <div class="task-input-row">
+                        <input type="text" class="task-input" id="task-input" placeholder="Add a task..." maxlength="120">
+                        <button class="btn-add-task" id="btn-add-task">Add</button>
+                    </div>
+                    <div class="task-list" id="task-list"></div>
+                    <div class="task-footer" id="task-footer" style="display:none">
+                        <button class="btn-task-action" id="btn-clear-finished">Clear finished</button>
+                        <button class="btn-task-action btn-task-action--danger" id="btn-clear-all">Clear all</button>
+                    </div>
                 </div>
             </div>
         </section>

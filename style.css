@@ -89,15 +89,9 @@ body {
 .header-brand {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
     color: #fff;
 }
-
-.sparkle-icon {
-    width: 18px;
-    height: 18px;
-    color: var(--bs-orange);
-    flex-shrink: 0;
 }
 
 .header-title {
@@ -1011,6 +1005,108 @@ body {
 }
 
 .bs-cta-pill:hover { background: var(--bs-blue-hover); }
+
+/* ---- Header Logo ---- */
+.header-logo {
+    height: 24px;
+    width: auto;
+    flex-shrink: 0;
+}
+
+/* ---- Grid Layout (Soundscapes & Tasks side by side) ---- */
+.bs-grid-section {
+    max-width: clamp(280px, 88%, 1000px);
+    margin: 0 auto;
+    padding: 0 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+.bs-grid-section .bs-timer-band {
+    margin-bottom: 0;
+}
+
+@media (max-width: 800px) {
+    .bs-grid-section {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+}
+
+/* ---- Enhanced Floating Tips ---- */
+.floating-tip {
+    position: fixed;
+    bottom: auto;
+    top: 50%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-50%) translateY(40px);
+    max-width: 360px;
+    width: 90%;
+    background: var(--bs-dark);
+    color: #fff;
+    border-radius: 14px;
+    padding: 20px 40px 20px 20px;
+    z-index: 300;
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+}
+
+.floating-tip.visible {
+    transform: translateX(-50%) translateY(-50%) translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.floating-tip-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #fff;
+}
+
+.floating-tip-text {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.75);
+    line-height: 1.6;
+}
+
+.floating-tip-close {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.45);
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 4px 6px;
+    line-height: 1;
+    transition: color var(--bs-transition);
+}
+
+.floating-tip-close:hover { color: rgba(255,255,255,0.8); }
+
+/* ---- Enhanced Modals ---- */
+.share-modal-inner,
+.settings-modal-inner {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border: 1px solid rgba(0,0,0,0.04);
+}
+
+.share-modal-inner {
+    max-width: 520px;
+    padding: 32px;
+}
+
+.settings-modal-inner {
+    max-width: 420px;
+    padding: 28px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
 
 /* ---- Utility ---- */
 .hidden { display: none !important; }
