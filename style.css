@@ -903,58 +903,6 @@ body {
     100% { transform: translateY(110vh) translateX(var(--drift, 0px)) rotate(720deg); opacity: 0; }
 }
 
-/* ---- Floating Tips ---- */
-.floating-tip {
-    position: fixed;
-    bottom: 68px;
-    left: 16px;
-    max-width: 270px;
-    background: var(--bs-dark);
-    color: #fff;
-    border-radius: 10px;
-    padding: 14px 36px 14px 16px;
-    z-index: 300;
-    transform: translateY(14px);
-    opacity: 0;
-    pointer-events: none;
-    transition: transform 0.4s ease, opacity 0.4s ease;
-    box-shadow: var(--bs-shadow-lg);
-}
-
-.floating-tip.visible {
-    transform: translateY(0);
-    opacity: 1;
-    pointer-events: auto;
-}
-
-.floating-tip-title {
-    font-size: 0.82rem;
-    font-weight: 700;
-    margin-bottom: 4px;
-    color: #fff;
-}
-
-.floating-tip-text {
-    font-size: 0.76rem;
-    color: rgba(255,255,255,0.68);
-    line-height: 1.5;
-}
-
-.floating-tip-close {
-    position: absolute;
-    top: 8px; right: 10px;
-    background: none;
-    border: none;
-    color: rgba(255,255,255,0.45);
-    cursor: pointer;
-    font-size: 0.75rem;
-    padding: 2px 4px;
-    line-height: 1;
-    transition: color var(--bs-transition);
-}
-
-.floating-tip-close:hover { color: rgba(255,255,255,0.8); }
-
 /* ---- Persistent CTA Bar ---- */
 .bs-cta-bar {
     position: fixed;
@@ -1008,7 +956,7 @@ body {
 
 /* ---- Header Logo ---- */
 .header-logo {
-    height: 24px;
+    height: 32px;
     width: auto;
     flex-shrink: 0;
 }
@@ -1037,19 +985,19 @@ body {
 /* ---- Enhanced Floating Tips ---- */
 .floating-tip {
     position: fixed;
-    top: 50%;
-    left: calc(50% - 340px);
-    transform: translateY(-50%) translateX(-16px);
-    max-width: 240px;
+    top: 270px;
+    left: calc(50% - 330px);
+    transform: translateY(-50%) translateX(-12px);
+    max-width: 210px;
     background: var(--bs-dark);
     color: #fff;
     border-radius: 14px;
-    padding: 18px 36px 18px 18px;
+    padding: 16px 32px 16px 16px;
     z-index: 300;
     opacity: 0;
     pointer-events: none;
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.28);
 }
 
 .floating-tip.visible {
