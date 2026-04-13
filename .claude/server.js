@@ -2,7 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const root = path.resolve(__dirname, '..');
-const mime = { '.html': 'text/html', '.css': 'text/css', '.js': 'application/javascript', '.ttf': 'font/ttf' };
+const mime = { '.html': 'text/html', '.css': 'text/css', '.js': 'application/javascript', '.ttf': 'font/ttf', '.svg': 'image/svg+xml', '.png': 'image/png' };
 http.createServer((req, res) => {
   const file = path.join(root, req.url === '/' ? 'index.html' : req.url);
   fs.readFile(file, (err, data) => {
