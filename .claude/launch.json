@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "pomodoro",
+      "runtimeExecutable": "/usr/local/bin/node",
+      "runtimeArgs": [".claude/server.js"],
+      "port": 3000
+    }
+  ]
+}

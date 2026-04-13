@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Timer – Free Focus Timer | Brainscape</title>
+    <meta name="description" content="Free Pomodoro study timer with task tracking, soundscapes, and streak tracking. Build better study habits with Brainscape.">
+
+    <!-- GA4 — replace G-XXXXXXXXXX with your Measurement ID -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-XXXXXXXXXX');
+    </script>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Confetti layer -->
+    <div id="confetti-container" class="confetti-container"></div>
+
+    <!-- Floating tip -->
+    <div class="floating-tip" id="floating-tip">
+        <button class="floating-tip-close" id="floating-tip-close">✕</button>
+        <div class="floating-tip-title" id="floating-tip-title"></div>
+        <div class="floating-tip-text" id="floating-tip-text"></div>
+    </div>
+
+    <div class="bs-timer-page">
+
+        <!-- Header -->
+        <header class="bs-header">
+            <div class="band-inner header-inner">
+                <div class="header-brand">
+                    <svg class="sparkle-icon" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 2L14.09 8.26L20 9.27L15.55 13.97L16.91 20L12 16.9L7.09 20L8.45 13.97L4 9.27L9.91 8.26L12 2Z" fill="currentColor"/>
+                    </svg>
+                    <span class="header-title">Study Timer</span>
+                </div>
+                <button class="btn-settings-open" id="btn-settings">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                    Settings
+                </button>
+            </div>
+        </header>
+
+        <!-- Timer Section -->
+        <section class="bs-timer-main">
+            <div class="band-inner">
+
+                <!-- Mode Tabs -->
+                <div class="mode-tabs">
+                    <button class="mode-tab active" data-mode="pomodoro">Pomodoro</button>
+                    <button class="mode-tab" data-mode="short-break">Short Break</button>
+                    <button class="mode-tab" data-mode="long-break">Long Break</button>
+                </div>
+
+                <!-- Timer Ring -->
+                <div class="timer-container">
+                    <svg class="timer-ring" viewBox="0 0 320 320">
+                        <circle class="timer-ring-bg" cx="160" cy="160" r="145" />
+                        <circle class="timer-ring-progress" id="timer-progress" cx="160" cy="160" r="145" />
+                    </svg>
+                    <div class="timer-display">
+                        <div class="timer-time" id="timer-time">25:00</div>
+                        <div class="timer-label" id="timer-label">Ready to focus</div>
+                    </div>
+                </div>
+
+                <!-- START / PAUSE -->
+                <div class="start-row">
+                    <button class="btn-start-main" id="btn-start">START</button>
+                    <button class="btn-reset-subtle" id="btn-reset" title="Reset">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="1 4 1 10 7 10"></polyline>
+                            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Session info -->
+                <div class="session-info">
+                    <span class="session-count" id="session-count">#1</span>
+                    <span class="session-status" id="session-status">Time to focus!</span>
+                </div>
+
+                <!-- Streak Stats -->
+                <div class="streak-stats" id="streak-stats"></div>
+
+            </div>
+        </section>
+
+        <!-- Soundscapes Band -->
+        <section class="bs-timer-band bs-timer-band--alt">
+            <div class="band-inner">
+                <h2 class="band-heading">Soundscapes</h2>
+                <p class="band-blurb">Pick an ambient backdrop to lock into deep focus.</p>
+                <div class="soundscape-grid" id="soundscape-grid"></div>
+                <div class="volume-control" id="volume-control">
+                    <svg class="volume-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                    </svg>
+                    <input type="range" class="volume-slider" id="volume-slider" min="0" max="100" value="50">
+                </div>
+            </div>
+        </section>
+
+        <!-- Tasks Band -->
+        <section class="bs-timer-band">
+            <div class="band-inner">
+                <h2 class="band-heading">Tasks</h2>
+                <p class="band-blurb">Track what you're working on each session.</p>
+                <div class="task-input-row">
+                    <input type="text" class="task-input" id="task-input" placeholder="Add a task..." maxlength="120">
+                    <button class="btn-add-task" id="btn-add-task">Add</button>
+                </div>
+                <div class="task-list" id="task-list"></div>
+                <div class="task-footer" id="task-footer" style="display:none">
+                    <button class="btn-task-action" id="btn-clear-finished">Clear finished</button>
+                    <button class="btn-task-action btn-task-action--danger" id="btn-clear-all">Clear all</button>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Session Complete Modal -->
+    <div class="share-modal" id="share-modal">
+        <div class="share-modal-inner">
+            <h2 class="share-modal-title">Session complete! 🎉</h2>
+            <div class="share-card-preview" id="share-card-preview"></div>
+            <p class="bookmark-hint">📌 Bookmark this page to keep your streak going</p>
+            <div class="share-actions">
+                <button class="bs-btn bs-btn-primary" id="btn-download">↓ Save Image</button>
+                <button class="bs-btn bs-btn-outline" id="btn-copy-link">🔗 Copy Link</button>
+            </div>
+            <button class="bs-btn bs-btn-ghost share-close" id="share-close">Start next session →</button>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="settings-modal" id="settings-modal">
+        <div class="settings-modal-inner">
+            <div class="settings-modal-header">
+                <h2 class="settings-modal-title">Settings</h2>
+                <button class="settings-modal-close" id="settings-modal-close">✕</button>
+            </div>
+
+            <div class="settings-section">
+                <h3 class="settings-section-title">Timer (minutes)</h3>
+                <div class="setting-row">
+                    <label class="setting-label">Pomodoro</label>
+                    <div class="setting-control">
+                        <button class="stepper-btn" data-target="pomodoro" data-dir="-1">−</button>
+                        <span class="setting-value" id="setting-pomodoro">25</span>
+                        <button class="stepper-btn" data-target="pomodoro" data-dir="1">+</button>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <label class="setting-label">Short Break</label>
+                    <div class="setting-control">
+                        <button class="stepper-btn" data-target="shortBreak" data-dir="-1">−</button>
+                        <span class="setting-value" id="setting-shortBreak">5</span>
+                        <button class="stepper-btn" data-target="shortBreak" data-dir="1">+</button>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <label class="setting-label">Long Break</label>
+                    <div class="setting-control">
+                        <button class="stepper-btn" data-target="longBreak" data-dir="-1">−</button>
+                        <span class="setting-value" id="setting-longBreak">15</span>
+                        <button class="stepper-btn" data-target="longBreak" data-dir="1">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h3 class="settings-section-title">Long Break</h3>
+                <div class="setting-row">
+                    <label class="setting-label">Sessions before long break</label>
+                    <div class="setting-control">
+                        <button class="stepper-btn" data-target="longBreakInterval" data-dir="-1">−</button>
+                        <span class="setting-value" id="setting-longBreakInterval">4</span>
+                        <button class="stepper-btn" data-target="longBreakInterval" data-dir="1">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h3 class="settings-section-title">Auto Start</h3>
+                <div class="setting-row">
+                    <label class="setting-label" for="toggle-autobreaks">Auto-start breaks</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="toggle-autobreaks">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="setting-row">
+                    <label class="setting-label" for="toggle-autopomodoros">Auto-start pomodoros</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="toggle-autopomodoros">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <button class="btn-settings-done" id="btn-settings-done">Done</button>
+        </div>
+    </div>
+
+    <!-- Persistent Brainscape CTA Bar -->
+    <div class="bs-cta-bar">
+        <div class="bs-cta-bar-inner">
+            <p class="bs-cta-tagline" id="bs-cta-tagline">Learn faster with spaced repetition</p>
+            <a href="https://www.brainscape.com/signup?utm_source=study_timer"
+               class="bs-cta-pill"
+               id="bs-cta-btn"
+               target="_blank" rel="noopener noreferrer">
+                Try Brainscape Free
+            </a>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
