@@ -463,7 +463,7 @@ class StudyTimer {
             new Notification(wasPomodoro ? 'Session complete! ✅' : 'Break over!', {
                 body: wasPomodoro
                     ? `${this.settings.pomodoro} min done. 🔥 ${this.streakData.days}-day streak!`
-                    : 'Time to focus again.',
+                    : 'Time to study again.',
             });
         }
     }
@@ -475,13 +475,13 @@ class StudyTimer {
         this.dom.time.textContent = str;
         this.dom.progress.style.strokeDashoffset = this.circumference * (1 - this.timeRemaining/this.totalTime);
         if (this.status==='running') {
-            document.title = `${str} – ${this.mode==='pomodoro'?'Focus':'Break'} | Brainscape`;
+            document.title = `${str} – ${this.mode==='pomodoro'?'Study':'Break'} | Brainscape`;
         }
     }
 
     updateSessionInfo() {
         this.dom.sessionCount.textContent = `#${this.pomodoroCount+1}`;
-        const labels = { pomodoro:'Time to focus!', 'short-break':'Time for a break!', 'long-break':'Time for a long break!' };
+        const labels = { pomodoro:'Time to study!', 'short-break':'Time for a break!', 'long-break':'Time for a long break!' };
         this.dom.sessionStatus.textContent = labels[this.mode];
     }
 
@@ -519,7 +519,7 @@ class StudyTimer {
                     <span class="task-active-dot"></span>
                 </button>
                 <span class="task-text">${this.escHtml(t.text)}</span>
-                ${t.pomodoroCount>0?`<span class="task-pomodoro-count" title="${t.pomodoroCount} pomodoro(s)">🍅×${t.pomodoroCount}</span>`:''}
+                ${t.pomodoroCount>0?`<span class="task-pomodoro-count" title="${t.pomodoroCount} session(s)">✅×${t.pomodoroCount}</span>`:''}
                 <button class="task-done-btn" data-action="done" title="${t.done?'Mark undone':'Mark done'}">
                     ${t.done
                         ? `<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`
