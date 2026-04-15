@@ -129,6 +129,18 @@ body {
     text-align: center;
 }
 
+.timer-hero {
+    font-family: var(--bs-font-display);
+    font-weight: 400;
+    font-size: clamp(1.6rem, 4.5vw, 2.6rem);
+    line-height: 1.15;
+    color: var(--bs-text);
+    text-align: center;
+    margin: 8px auto 24px;
+    max-width: 640px;
+    letter-spacing: -0.01em;
+}
+
 /* ---- Mode Tabs ---- */
 .mode-tabs {
     display: inline-flex;
