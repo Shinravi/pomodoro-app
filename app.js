@@ -8,6 +8,7 @@ class SoundEngine {
         this.ctx = null;
         this.masterGain = null;
         this.activeSources = [];
+        this.activeTimers = [];
         this.activeSound = null;
         this.volume = 0.5;
         this.isPlaying = false;
@@ -29,6 +30,8 @@ class SoundEngine {
     stopAll() {
         this.activeSources.forEach(src => { try { src.stop(); } catch(e){} });
         this.activeSources = [];
+        this.activeTimers.forEach(t => clearTimeout(t));
+        this.activeTimers = [];
         this.isPlaying = false;
         this.activeSound = null;
     }
@@ -106,13 +109,104 @@ class SoundEngine {
 
     playCafe() {
         this.init(); this.stopAll(); this.activeSound='cafe'; this.isPlaying=true;
-        const n=this._src(this.createNoiseBuffer('pink',4));
-        const bp=this.ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=1500; bp.Q.value=0.5;
-        const g=this.ctx.createGain(); g.gain.value=0.25;
-        n.connect(bp); bp.connect(g); g.connect(this.masterGain); n.start();
-        const h=this.ctx.createOscillator(),hg=this.ctx.createGain(),hf=this.ctx.createBiquadFilter();
-        h.type='sawtooth'; h.frequency.value=60; hg.gain.value=0.02; hf.type='lowpass'; hf.frequency.value=120;
-        h.connect(hf); hf.connect(hg); hg.connect(this.masterGain); h.start(); this.activeSources.push(h);
+        const ctx = this.ctx;
+        const bus = ctx.createGain(); bus.gain.value = 0.9;
+        bus.connect(this.masterGain);
+
+        // ---- Crowd murmur layer 1: warm low-mid (300–900 Hz) ----
+        const m1 = this._src(this.createNoiseBuffer('pink', 6));
+        const m1bp = ctx.createBiquadFilter(); m1bp.type='bandpass'; m1bp.frequency.value=600; m1bp.Q.value=0.45;
+        const m1g = ctx.createGain(); m1g.gain.value = 0.38;
+        m1.connect(m1bp); m1bp.connect(m1g); m1g.connect(bus); m1.start();
+
+        // ---- Crowd murmur layer 2: speech-band formants (1.2–2.5 kHz) ----
+        const m2 = this._src(this.createNoiseBuffer('pink', 6));
+        const m2bp = ctx.createBiquadFilter(); m2bp.type='bandpass'; m2bp.frequency.value=1600; m2bp.Q.value=0.7;
+        const m2g = ctx.createGain(); m2g.gain.value = 0.22;
+        m2.connect(m2bp); m2bp.connect(m2g); m2g.connect(bus); m2.start();
+
+        // Slow LFO modulating the murmur amplitude (ebb and flow of conversation)
+        const lfo = ctx.createOscillator(); const lfog = ctx.createGain();
+        lfo.type='sine'; lfo.frequency.value = 0.06; lfog.gain.value = 0.12;
+        lfo.connect(lfog); lfog.connect(m1g.gain); lfo.start();
+        this.activeSources.push(lfo);
+
+        // Second LFO (slightly different rate) on the upper formant layer
+        const lfo2 = ctx.createOscillator(); const lfo2g = ctx.createGain();
+        lfo2.type='sine'; lfo2.frequency.value = 0.09; lfo2g.gain.value = 0.06;
+        lfo2.connect(lfo2g); lfo2g.connect(m2g.gain); lfo2.start();
+        this.activeSources.push(lfo2);
+
+        // ---- Low room tone / HVAC rumble ----
+        const room = this._src(this.createNoiseBuffer('brown', 4));
+        const rlp = ctx.createBiquadFilter(); rlp.type='lowpass'; rlp.frequency.value=90;
+        const rg = ctx.createGain(); rg.gain.value = 0.35;
+        room.connect(rlp); rlp.connect(rg); rg.connect(bus); room.start();
+
+        // ---- Random ceramic clinks (cup against saucer) ----
+        const scheduleClink = () => {
+            if (this.activeSound !== 'cafe') return;
+            const delay = 3500 + Math.random() * 8500;
+            const t = setTimeout(() => {
+                if (this.activeSound !== 'cafe') return;
+                this._cafeClink(bus);
+                scheduleClink();
+            }, delay);
+            this.activeTimers.push(t);
+        };
+        scheduleClink();
+
+        // ---- Occasional espresso machine hiss ----
+        const scheduleHiss = () => {
+            if (this.activeSound !== 'cafe') return;
+            const delay = 22000 + Math.random() * 38000;
+            const t = setTimeout(() => {
+                if (this.activeSound !== 'cafe') return;
+                this._cafeHiss(bus, 1.3 + Math.random() * 1.6);
+                scheduleHiss();
+            }, delay);
+            this.activeTimers.push(t);
+        };
+        // first hiss after a shorter delay so the user hears the cafe character early
+        const firstHiss = setTimeout(() => {
+            if (this.activeSound === 'cafe') this._cafeHiss(bus, 1.5);
+            scheduleHiss();
+        }, 6000 + Math.random() * 6000);
+        this.activeTimers.push(firstHiss);
+    }
+
+    _cafeClink(dest) {
+        const ctx = this.ctx, now = ctx.currentTime;
+        // Two close partials produce a metallic/ceramic ring
+        const f1 = 1900 + Math.random() * 1700;
+        const partials = [f1, f1 * (1.42 + Math.random() * 0.35)];
+        const dur = 0.05 + Math.random() * 0.06;
+        partials.forEach((freq, i) => {
+            const o = ctx.createOscillator();
+            const g = ctx.createGain();
+            o.type = 'sine'; o.frequency.value = freq;
+            const peak = i === 0 ? 0.18 : 0.10;
+            g.gain.setValueAtTime(0, now);
+            g.gain.linearRampToValueAtTime(peak, now + 0.004);
+            g.gain.exponentialRampToValueAtTime(0.0008, now + dur);
+            o.connect(g); g.connect(dest);
+            o.start(now); o.stop(now + dur + 0.05);
+        });
+    }
+
+    _cafeHiss(dest, dur) {
+        const ctx = this.ctx, now = ctx.currentTime;
+        const n = ctx.createBufferSource();
+        n.buffer = this.createNoiseBuffer('white', Math.max(2, dur + 0.6));
+        const hp = ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=2400;
+        const lp = ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=7500;
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0, now);
+        g.gain.linearRampToValueAtTime(0.22, now + 0.18);
+        g.gain.linearRampToValueAtTime(0.18, now + dur * 0.7);
+        g.gain.linearRampToValueAtTime(0, now + dur);
+        n.connect(hp); hp.connect(lp); lp.connect(g); g.connect(dest);
+        n.start(now); n.stop(now + dur + 0.1);
     }
 
     playOcean() {
@@ -156,12 +250,49 @@ class SoundEngine {
     playClick()    { this.init(); this.playTone(900,0.04,'sine'); }
     playPause()    { this.init(); this.playTone(400,0.1,'sine'); }
 
+    // Cached decoded audio buffers (keyed by URL) so repeated plays are instant.
+    async _loadFile(url) {
+        if (!this._bufferCache) this._bufferCache = new Map();
+        if (this._bufferCache.has(url)) return this._bufferCache.get(url);
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const arr = await res.arrayBuffer();
+        const buf = await this.ctx.decodeAudioData(arr);
+        this._bufferCache.set(url, buf);
+        return buf;
+    }
+
+    // For sounds that have a real recording available (royalty-free MP3 in /sounds),
+    // start playback from that file and replace the synth fallback. If the file
+    // is missing or fails to load, the synth keeps playing.
+    async _tryUpgradeToFile(id, url) {
+        this.init();
+        let buf;
+        try { buf = await this._loadFile(url); }
+        catch(e) { return; /* file not available — keep synth */ }
+        if (this.activeSound !== id) return; // user switched sounds while loading
+        this.stopAll();
+        this.activeSound = id; this.isPlaying = true;
+        const s = this._src(buf, true);
+        const g = this.ctx.createGain();
+        const t0 = this.ctx.currentTime;
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.exponentialRampToValueAtTime(1, t0 + 0.4);
+        s.connect(g); g.connect(this.masterGain); s.start();
+    }
+
     play(id) {
         const map = { lofi:()=>this.playLofi(), rain:()=>this.playRain(),
             binaural:()=>this.playBinaural(), cafe:()=>this.playCafe(), ocean:()=>this.playOcean(),
             'white-noise':()=>this.playNoise('white'), 'brown-noise':()=>this.playNoise('brown'),
             'pink-noise':()=>this.playNoise('pink'), silence:()=>this.stopAll() };
         (map[id] || (()=>this.stopAll()))();
+
+        // Optionally upgrade to a real royalty-free recording if one is available.
+        // Drop an MP3 at the matching path (e.g. sounds/lofi.mp3) and it will be
+        // used automatically. Recommended source: https://pixabay.com/music/ (CC0).
+        const fileMap = { lofi: 'sounds/lofi.mp3', cafe: 'sounds/cafe.mp3' };
+        if (fileMap[id]) this._tryUpgradeToFile(id, fileMap[id]);
     }
 
     toggle(id) {
@@ -564,12 +695,21 @@ class StudyTimer {
     }
 
     // ---- Settings panel ----
+    settingLimits() {
+        return {
+            pomodoro:          { min:1, max:180, step:1 },
+            shortBreak:        { min:1, max:60,  step:1 },
+            longBreak:         { min:1, max:120, step:1 },
+            longBreakInterval: { min:1, max:20,  step:1 },
+        };
+    }
+
     openSettings() {
         const s = this.settings;
-        document.getElementById('setting-pomodoro').textContent = s.pomodoro;
-        document.getElementById('setting-shortBreak').textContent = s.shortBreak;
-        document.getElementById('setting-longBreak').textContent = s.longBreak;
-        document.getElementById('setting-longBreakInterval').textContent = s.longBreakInterval;
+        document.getElementById('setting-pomodoro').value = s.pomodoro;
+        document.getElementById('setting-shortBreak').value = s.shortBreak;
+        document.getElementById('setting-longBreak').value = s.longBreak;
+        document.getElementById('setting-longBreakInterval').value = s.longBreakInterval;
         document.getElementById('toggle-autobreaks').checked = s.autoStartBreaks;
         document.getElementById('toggle-autopomodoros').checked = s.autoStartPomodoros;
         this.dom.settingsModal.classList.add('open');
@@ -585,17 +725,24 @@ class StudyTimer {
     }
 
     adjustSetting(target, dir) {
-        const limits = {
-            pomodoro:          { min:1, max:90, step:5 },
-            shortBreak:        { min:1, max:30, step:1 },
-            longBreak:         { min:1, max:60, step:5 },
-            longBreakInterval: { min:1, max:10, step:1 },
-        };
-        const cfg = limits[target]; if (!cfg) return;
+        const cfg = this.settingLimits()[target]; if (!cfg) return;
         let val = this.settings[target] + dir * cfg.step;
         val = Math.max(cfg.min, Math.min(cfg.max, val));
         this.settings[target] = val;
-        document.getElementById(`setting-${target}`).textContent = val;
+        document.getElementById(`setting-${target}`).value = val;
+        this.saveSettings();
+    }
+
+    setSettingFromInput(target, raw, opts={}) {
+        const cfg = this.settingLimits()[target]; if (!cfg) return;
+        let val = parseInt(raw, 10);
+        if (isNaN(val)) {
+            if (opts.commit) val = this.settings[target];
+            else return; // mid-typing empty field — leave settings alone
+        }
+        val = Math.max(cfg.min, Math.min(cfg.max, val));
+        this.settings[target] = val;
+        if (opts.commit) document.getElementById(`setting-${target}`).value = val;
         this.saveSettings();
     }
 
@@ -751,6 +898,12 @@ class StudyTimer {
         this.dom.settingsModal.addEventListener('click',e=>{ if (e.target===this.dom.settingsModal) this.closeSettings(); });
         document.querySelectorAll('.stepper-btn').forEach(btn=>{
             btn.addEventListener('click',()=>this.adjustSetting(btn.dataset.target, parseInt(btn.dataset.dir)));
+        });
+        document.querySelectorAll('.setting-input').forEach(input=>{
+            input.addEventListener('input',e=>this.setSettingFromInput(e.target.dataset.target, e.target.value));
+            input.addEventListener('blur',e=>this.setSettingFromInput(e.target.dataset.target, e.target.value, {commit:true}));
+            input.addEventListener('keydown',e=>{ if (e.key==='Enter') e.target.blur(); });
+            input.addEventListener('focus',e=>e.target.select());
         });
         document.getElementById('toggle-autobreaks').addEventListener('change',e=>{
             this.settings.autoStartBreaks=e.target.checked; this.saveSettings();

@@ -160,7 +160,7 @@
                     <label class="setting-label">Focus</label>
                     <div class="setting-control">
                         <button class="stepper-btn" data-target="pomodoro" data-dir="-1">−</button>
-                        <span class="setting-value" id="setting-pomodoro">25</span>
+                        <input type="number" class="setting-input" id="setting-pomodoro" data-target="pomodoro" value="25" min="1" max="180" inputmode="numeric">
                         <button class="stepper-btn" data-target="pomodoro" data-dir="1">+</button>
                     </div>
                 </div>
@@ -168,7 +168,7 @@
                     <label class="setting-label">Short Break</label>
                     <div class="setting-control">
                         <button class="stepper-btn" data-target="shortBreak" data-dir="-1">−</button>
-                        <span class="setting-value" id="setting-shortBreak">5</span>
+                        <input type="number" class="setting-input" id="setting-shortBreak" data-target="shortBreak" value="5" min="1" max="60" inputmode="numeric">
                         <button class="stepper-btn" data-target="shortBreak" data-dir="1">+</button>
                     </div>
                 </div>
@@ -176,7 +176,7 @@
                     <label class="setting-label">Long Break</label>
                     <div class="setting-control">
                         <button class="stepper-btn" data-target="longBreak" data-dir="-1">−</button>
-                        <span class="setting-value" id="setting-longBreak">15</span>
+                        <input type="number" class="setting-input" id="setting-longBreak" data-target="longBreak" value="15" min="1" max="120" inputmode="numeric">
                         <button class="stepper-btn" data-target="longBreak" data-dir="1">+</button>
                     </div>
                 </div>
@@ -188,7 +188,7 @@
                     <label class="setting-label">Sessions before long break</label>
                     <div class="setting-control">
                         <button class="stepper-btn" data-target="longBreakInterval" data-dir="-1">−</button>
-                        <span class="setting-value" id="setting-longBreakInterval">4</span>
+                        <input type="number" class="setting-input" id="setting-longBreakInterval" data-target="longBreakInterval" value="4" min="1" max="20" inputmode="numeric">
                         <button class="stepper-btn" data-target="longBreakInterval" data-dir="1">+</button>
                     </div>
                 </div>

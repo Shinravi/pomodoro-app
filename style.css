@@ -811,6 +811,34 @@ body {
     text-align: center;
 }
 
+.setting-input {
+    font-family: var(--bs-font-mono);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--bs-text);
+    width: 56px;
+    text-align: center;
+    padding: 4px 6px;
+    border: 1.5px solid var(--bs-border);
+    border-radius: 6px;
+    background: var(--bs-bg-white);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    -moz-appearance: textfield;
+}
+
+.setting-input::-webkit-outer-spin-button,
+.setting-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.setting-input:hover { border-color: var(--timer-accent); }
+.setting-input:focus {
+    outline: none;
+    border-color: var(--timer-accent);
+    box-shadow: 0 0 0 3px var(--timer-accent-soft);
+}
+
 .stepper-btn {
     width: 28px; height: 28px;
     border-radius: 50%;
