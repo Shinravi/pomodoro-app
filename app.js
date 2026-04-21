@@ -338,16 +338,19 @@ class StudyTimer {
     start() {
         this.sound.init();
         this.status = 'running';
+        this._startedAt = Date.now();
+        this._startedWithRemaining = this.timeRemaining;
         this.dom.btnStart.textContent = 'PAUSE';
         this.dom.btnStart.classList.add('is-running');
         this.dom.label.textContent = this.mode==='pomodoro' ? 'Focusing...' :
             this.mode==='short-break' ? 'Short break' : 'Long break';
-        this.interval = setInterval(()=>this.tick(), 1000);
+        this.interval = setInterval(()=>this.tick(), 250);
     }
 
     pause() {
         this.status = 'paused';
         clearInterval(this.interval);
+        this.timeRemaining = this._computeRemaining();
         this.dom.btnStart.textContent = 'RESUME';
         this.dom.btnStart.classList.remove('is-running');
         this.dom.label.textContent = 'Paused';
@@ -355,10 +358,12 @@ class StudyTimer {
 
     resume() {
         this.status = 'running';
+        this._startedAt = Date.now();
+        this._startedWithRemaining = this.timeRemaining;
         this.dom.btnStart.textContent = 'PAUSE';
         this.dom.btnStart.classList.add('is-running');
         this.dom.label.textContent = this.mode==='pomodoro' ? 'Focusing...' : 'On break';
-        this.interval = setInterval(()=>this.tick(), 1000);
+        this.interval = setInterval(()=>this.tick(), 250);
     }
 
     reset() {
@@ -385,19 +390,27 @@ class StudyTimer {
         else if (this.status==='paused')  { this.resume(); this.sound.playStart(); }
     }
 
+    _computeRemaining() {
+        const elapsed = Math.floor((Date.now() - this._startedAt) / 1000);
+        return Math.max(0, this._startedWithRemaining - elapsed);
+    }
+
     tick() {
-        this.timeRemaining--;
-        if (this.timeRemaining<=0) {
-            this.timeRemaining=0; this.updateDisplay();
-            clearInterval(this.interval); this.status='idle';
+        const prev = this.timeRemaining;
+        this.timeRemaining = this._computeRemaining();
+        if (this.timeRemaining <= 0) {
+            this.timeRemaining = 0; this.updateDisplay();
+            clearInterval(this.interval); this.status = 'idle';
             this.sessionComplete(); return;
         }
-        if (this.timeRemaining===60 && !this.warningPlayed) {
-            this.warningPlayed=true; this.sound.playWarning();
-            this.dom.time.classList.add('warning');
+        if (prev !== this.timeRemaining) {
+            if (this.timeRemaining <= 60 && !this.warningPlayed) {
+                this.warningPlayed = true; this.sound.playWarning();
+                this.dom.time.classList.add('warning');
+            }
+            if (this.timeRemaining <= 10) this.sound.playTick();
+            this.updateDisplay();
         }
-        if (this.timeRemaining<=10) this.sound.playTick();
-        this.updateDisplay();
     }
 
     sessionComplete() {
