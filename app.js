@@ -15,11 +15,16 @@ class SoundEngine {
     }
 
     init() {
-        if (this.ctx) return;
+        if (this.ctx) {
+            if (this.ctx.state === 'suspended') this.ctx.resume();
+            return;
+        }
         this.ctx = new (window.AudioContext || window.webkitAudioContext)();
         this.masterGain = this.ctx.createGain();
         this.masterGain.gain.value = this.volume;
         this.masterGain.connect(this.ctx.destination);
+        // Safari sometimes starts the context suspended even inside a user gesture
+        if (this.ctx.state === 'suspended') this.ctx.resume();
     }
 
     setVolume(val) {
@@ -63,22 +68,6 @@ class SoundEngine {
         return s;
     }
 
-    playLofi() {
-        this.init(); this.stopAll(); this.activeSound='lofi'; this.isPlaying=true;
-        const n=this._src(this.createNoiseBuffer('pink',4));
-        const f=this.ctx.createBiquadFilter(); f.type='lowpass'; f.frequency.value=400;
-        n.connect(f); f.connect(this.masterGain); n.start();
-        const bass=this.ctx.createOscillator(); const bg=this.ctx.createGain();
-        bass.type='sine'; bass.frequency.value=55; bg.gain.value=0.12;
-        bass.connect(bg); bg.connect(this.masterGain); bass.start(); this.activeSources.push(bass);
-        [261.63,329.63,392.00].forEach(freq=>{
-            const o=this.ctx.createOscillator(),og=this.ctx.createGain(),of=this.ctx.createBiquadFilter();
-            o.type='sine'; o.frequency.value=freq; og.gain.value=0.03;
-            of.type='lowpass'; of.frequency.value=800;
-            o.connect(of); of.connect(og); og.connect(this.masterGain); o.start(); this.activeSources.push(o);
-        });
-    }
-
     playRain() {
         this.init(); this.stopAll(); this.activeSound='rain'; this.isPlaying=true;
         const n=this._src(this.createNoiseBuffer('white',4));
@@ -105,108 +94,6 @@ class SoundEngine {
         const pad=this.ctx.createOscillator(),pg=this.ctx.createGain(),pf=this.ctx.createBiquadFilter();
         pad.type='sine'; pad.frequency.value=100; pg.gain.value=0.06; pf.type='lowpass'; pf.frequency.value=300;
         pad.connect(pf); pf.connect(pg); pg.connect(this.masterGain); pad.start(); this.activeSources.push(pad);
-    }
-
-    playCafe() {
-        this.init(); this.stopAll(); this.activeSound='cafe'; this.isPlaying=true;
-        const ctx = this.ctx;
-        const bus = ctx.createGain(); bus.gain.value = 0.9;
-        bus.connect(this.masterGain);
-
-        // ---- Crowd murmur layer 1: warm low-mid (300–900 Hz) ----
-        const m1 = this._src(this.createNoiseBuffer('pink', 6));
-        const m1bp = ctx.createBiquadFilter(); m1bp.type='bandpass'; m1bp.frequency.value=600; m1bp.Q.value=0.45;
-        const m1g = ctx.createGain(); m1g.gain.value = 0.38;
-        m1.connect(m1bp); m1bp.connect(m1g); m1g.connect(bus); m1.start();
-
-        // ---- Crowd murmur layer 2: speech-band formants (1.2–2.5 kHz) ----
-        const m2 = this._src(this.createNoiseBuffer('pink', 6));
-        const m2bp = ctx.createBiquadFilter(); m2bp.type='bandpass'; m2bp.frequency.value=1600; m2bp.Q.value=0.7;
-        const m2g = ctx.createGain(); m2g.gain.value = 0.22;
-        m2.connect(m2bp); m2bp.connect(m2g); m2g.connect(bus); m2.start();
-
-        // Slow LFO modulating the murmur amplitude (ebb and flow of conversation)
-        const lfo = ctx.createOscillator(); const lfog = ctx.createGain();
-        lfo.type='sine'; lfo.frequency.value = 0.06; lfog.gain.value = 0.12;
-        lfo.connect(lfog); lfog.connect(m1g.gain); lfo.start();
-        this.activeSources.push(lfo);
-
-        // Second LFO (slightly different rate) on the upper formant layer
-        const lfo2 = ctx.createOscillator(); const lfo2g = ctx.createGain();
-        lfo2.type='sine'; lfo2.frequency.value = 0.09; lfo2g.gain.value = 0.06;
-        lfo2.connect(lfo2g); lfo2g.connect(m2g.gain); lfo2.start();
-        this.activeSources.push(lfo2);
-
-        // ---- Low room tone / HVAC rumble ----
-        const room = this._src(this.createNoiseBuffer('brown', 4));
-        const rlp = ctx.createBiquadFilter(); rlp.type='lowpass'; rlp.frequency.value=90;
-        const rg = ctx.createGain(); rg.gain.value = 0.35;
-        room.connect(rlp); rlp.connect(rg); rg.connect(bus); room.start();
-
-        // ---- Random ceramic clinks (cup against saucer) ----
-        const scheduleClink = () => {
-            if (this.activeSound !== 'cafe') return;
-            const delay = 3500 + Math.random() * 8500;
-            const t = setTimeout(() => {
-                if (this.activeSound !== 'cafe') return;
-                this._cafeClink(bus);
-                scheduleClink();
-            }, delay);
-            this.activeTimers.push(t);
-        };
-        scheduleClink();
-
-        // ---- Occasional espresso machine hiss ----
-        const scheduleHiss = () => {
-            if (this.activeSound !== 'cafe') return;
-            const delay = 22000 + Math.random() * 38000;
-            const t = setTimeout(() => {
-                if (this.activeSound !== 'cafe') return;
-                this._cafeHiss(bus, 1.3 + Math.random() * 1.6);
-                scheduleHiss();
-            }, delay);
-            this.activeTimers.push(t);
-        };
-        // first hiss after a shorter delay so the user hears the cafe character early
-        const firstHiss = setTimeout(() => {
-            if (this.activeSound === 'cafe') this._cafeHiss(bus, 1.5);
-            scheduleHiss();
-        }, 6000 + Math.random() * 6000);
-        this.activeTimers.push(firstHiss);
-    }
-
-    _cafeClink(dest) {
-        const ctx = this.ctx, now = ctx.currentTime;
-        // Two close partials produce a metallic/ceramic ring
-        const f1 = 1900 + Math.random() * 1700;
-        const partials = [f1, f1 * (1.42 + Math.random() * 0.35)];
-        const dur = 0.05 + Math.random() * 0.06;
-        partials.forEach((freq, i) => {
-            const o = ctx.createOscillator();
-            const g = ctx.createGain();
-            o.type = 'sine'; o.frequency.value = freq;
-            const peak = i === 0 ? 0.18 : 0.10;
-            g.gain.setValueAtTime(0, now);
-            g.gain.linearRampToValueAtTime(peak, now + 0.004);
-            g.gain.exponentialRampToValueAtTime(0.0008, now + dur);
-            o.connect(g); g.connect(dest);
-            o.start(now); o.stop(now + dur + 0.05);
-        });
-    }
-
-    _cafeHiss(dest, dur) {
-        const ctx = this.ctx, now = ctx.currentTime;
-        const n = ctx.createBufferSource();
-        n.buffer = this.createNoiseBuffer('white', Math.max(2, dur + 0.6));
-        const hp = ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=2400;
-        const lp = ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=7500;
-        const g = ctx.createGain();
-        g.gain.setValueAtTime(0, now);
-        g.gain.linearRampToValueAtTime(0.22, now + 0.18);
-        g.gain.linearRampToValueAtTime(0.18, now + dur * 0.7);
-        g.gain.linearRampToValueAtTime(0, now + dur);
-        n.connect(hp); hp.connect(lp); lp.connect(g); g.connect(dest);
-        n.start(now); n.stop(now + dur + 0.1);
     }
 
     playOcean() {
@@ -250,49 +137,12 @@ class SoundEngine {
     playClick()    { this.init(); this.playTone(900,0.04,'sine'); }
     playPause()    { this.init(); this.playTone(400,0.1,'sine'); }
 
-    // Cached decoded audio buffers (keyed by URL) so repeated plays are instant.
-    async _loadFile(url) {
-        if (!this._bufferCache) this._bufferCache = new Map();
-        if (this._bufferCache.has(url)) return this._bufferCache.get(url);
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const arr = await res.arrayBuffer();
-        const buf = await this.ctx.decodeAudioData(arr);
-        this._bufferCache.set(url, buf);
-        return buf;
-    }
-
-    // For sounds that have a real recording available (royalty-free MP3 in /sounds),
-    // start playback from that file and replace the synth fallback. If the file
-    // is missing or fails to load, the synth keeps playing.
-    async _tryUpgradeToFile(id, url) {
-        this.init();
-        let buf;
-        try { buf = await this._loadFile(url); }
-        catch(e) { return; /* file not available — keep synth */ }
-        if (this.activeSound !== id) return; // user switched sounds while loading
-        this.stopAll();
-        this.activeSound = id; this.isPlaying = true;
-        const s = this._src(buf, true);
-        const g = this.ctx.createGain();
-        const t0 = this.ctx.currentTime;
-        g.gain.setValueAtTime(0.0001, t0);
-        g.gain.exponentialRampToValueAtTime(1, t0 + 0.4);
-        s.connect(g); g.connect(this.masterGain); s.start();
-    }
-
     play(id) {
-        const map = { lofi:()=>this.playLofi(), rain:()=>this.playRain(),
-            binaural:()=>this.playBinaural(), cafe:()=>this.playCafe(), ocean:()=>this.playOcean(),
+        const map = { rain:()=>this.playRain(),
+            binaural:()=>this.playBinaural(), ocean:()=>this.playOcean(),
             'white-noise':()=>this.playNoise('white'), 'brown-noise':()=>this.playNoise('brown'),
             'pink-noise':()=>this.playNoise('pink'), silence:()=>this.stopAll() };
         (map[id] || (()=>this.stopAll()))();
-
-        // Optionally upgrade to a real royalty-free recording if one is available.
-        // Drop an MP3 at the matching path (e.g. sounds/lofi.mp3) and it will be
-        // used automatically. Recommended source: https://pixabay.com/music/ (CC0).
-        const fileMap = { lofi: 'sounds/lofi.mp3', cafe: 'sounds/cafe.mp3' };
-        if (fileMap[id]) this._tryUpgradeToFile(id, fileMap[id]);
     }
 
     toggle(id) {
@@ -672,9 +522,9 @@ class StudyTimer {
     // ---- Soundscapes ----
     renderSoundscapes() {
         const list = [
-            {id:'lofi',name:'Lo-Fi',emoji:'🎵'}, {id:'rain',name:'Rain',emoji:'🌧️'},
+            {id:'rain',name:'Rain',emoji:'🌧️'},
             {id:'white-noise',name:'White Noise',emoji:'📻'}, {id:'brown-noise',name:'Brown Noise',emoji:'🟤'},
-            {id:'binaural',name:'Binaural',emoji:'🧠'}, {id:'cafe',name:'Cafe',emoji:'☕'},
+            {id:'binaural',name:'Binaural',emoji:'🧠'},
             {id:'ocean',name:'Ocean',emoji:'🌊'}, {id:'pink-noise',name:'Pink Noise',emoji:'🩷'},
             {id:'silence',name:'Silence',emoji:'🔇'},
         ];
