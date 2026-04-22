@@ -186,6 +186,8 @@ class StudyTimer {
         this.totalTime     = this.settings.pomodoro * 60;
         this.interval = null;
         this.warningPlayed = false;
+        this.endTime = null;
+        this.lastTickSecond = null;
 
         this.sound = new SoundEngine();
 
@@ -361,12 +363,15 @@ class StudyTimer {
         this.dom.btnStart.classList.add('is-running');
         this.dom.label.textContent = this.mode==='pomodoro' ? 'Focusing...' :
             this.mode==='short-break' ? 'Short break' : 'Long break';
-        this.interval = setInterval(()=>this.tick(), 1000);
+        this.endTime = Date.now() + this.timeRemaining * 1000;
+        this.lastTickSecond = this.timeRemaining;
+        this.interval = setInterval(()=>this.tick(), 250);
     }
 
     pause() {
         this.status = 'paused';
         clearInterval(this.interval);
+        this.endTime = null;
         this.dom.btnStart.textContent = 'RESUME';
         this.dom.btnStart.classList.remove('is-running');
         this.dom.label.textContent = 'Paused';
@@ -377,12 +382,15 @@ class StudyTimer {
         this.dom.btnStart.textContent = 'PAUSE';
         this.dom.btnStart.classList.add('is-running');
         this.dom.label.textContent = this.mode==='pomodoro' ? 'Focusing...' : 'On break';
-        this.interval = setInterval(()=>this.tick(), 1000);
+        this.endTime = Date.now() + this.timeRemaining * 1000;
+        this.lastTickSecond = this.timeRemaining;
+        this.interval = setInterval(()=>this.tick(), 250);
     }
 
     reset() {
         clearInterval(this.interval);
         this.status = 'idle';
+        this.endTime = null;
         this.timeRemaining = this.getDuration(this.mode) * 60;
         this.totalTime = this.timeRemaining;
         this.warningPlayed = false;
@@ -405,17 +413,22 @@ class StudyTimer {
     }
 
     tick() {
-        this.timeRemaining--;
-        if (this.timeRemaining<=0) {
-            this.timeRemaining=0; this.updateDisplay();
-            clearInterval(this.interval); this.status='idle';
+        if (this.endTime == null) return;
+        const remaining = Math.max(0, Math.ceil((this.endTime - Date.now()) / 1000));
+        if (remaining === this.lastTickSecond) return;
+        this.timeRemaining = remaining;
+        if (remaining <= 0) {
+            this.lastTickSecond = 0;
+            this.updateDisplay();
+            clearInterval(this.interval); this.endTime = null; this.status = 'idle';
             this.sessionComplete(); return;
         }
-        if (this.timeRemaining===60 && !this.warningPlayed) {
-            this.warningPlayed=true; this.sound.playWarning();
+        if (remaining <= 60 && !this.warningPlayed) {
+            this.warningPlayed = true; this.sound.playWarning();
             this.dom.time.classList.add('warning');
         }
-        if (this.timeRemaining<=10) this.sound.playTick();
+        if (remaining <= 10) this.sound.playTick();
+        this.lastTickSecond = remaining;
         this.updateDisplay();
     }
 
@@ -793,6 +806,12 @@ class StudyTimer {
             if (e.target.tagName==='INPUT') return;
             if (e.code==='Space') { e.preventDefault(); this.handleStartPause(); }
             if (e.code==='KeyR' && this.status!=='running') this.reset();
+        });
+
+        // Resync immediately when the tab regains focus — browsers throttle
+        // setInterval in background tabs, so we rely on wall-clock time.
+        document.addEventListener('visibilitychange',()=>{
+            if (!document.hidden && this.status==='running') this.tick();
         });
     }
 
